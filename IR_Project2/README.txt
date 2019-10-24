@@ -1,0 +1,1 @@
+2018-10-07	removed dupplicate documents. Affected: ./data/lisa/docuemnts.txt
