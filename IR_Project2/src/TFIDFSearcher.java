@@ -3,6 +3,7 @@
 //ID: 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,9 +12,11 @@ import java.util.Set;
 
 public class TFIDFSearcher extends Searcher
 {	
+	double norm;
 	Map<Integer, Map<String, Double>> tfidf = new HashMap<>();
 	Map<String, Integer> dfs = new HashMap<>();
 	Map<String, Double> idfs = new HashMap<>();
+	Map<Integer, Double> normds = new HashMap<>();
 	
 	public TFIDFSearcher(String docFilename) {
 		super(docFilename); 
@@ -24,67 +27,69 @@ public class TFIDFSearcher extends Searcher
 			Set<String> terms = new HashSet<String>(d.getTokens());
 			Map<String, Double> tfs = new HashMap<>();
 			for(String term: terms) {
+				
+//				Count document frequency
+//				If the term already exist then increment
+//				Add the the term to the map otherwise
 				if (dfs.get(term) != null) {
 					dfs.put(term, dfs.get(term) + 1);
 				}else {
-					dfs.put(term, 0);
+					dfs.put(term, 1);
 				}
+				
 				tfs.put(term, tf(d.getTokens(), term));
-//				Line for debugging
-//				System.out.println(term + " " + tfs.get(term));
 			}
-//			System.out.println(tfs.size());
 			tfidf.put(d.getId(), tfs);
 		}
 		
 //		Loop to calculate inverted document frequency
 		for(String term: dfs.keySet()) {
-			if(dfs.get(term) == 0) {
-				idfs.put(term, (double) 0);
-			}else {
-				idfs.put(term, Math.log10(1 + (dfs.size() / (double) dfs.get(term))));
-			}
-//			Line for debugging
-//			System.out.println(term + " " + dfs.get(term) + " " + idfs.get(term));
+			idfs.put(term, Math.log10(1 + (dfs.size() / (double) dfs.get(term))));
 		}
 		
 //		Loop to calculate td-idf weight
 		for(Integer i: tfidf.keySet()) {
+			norm = 0;
 			for(String term: tfidf.get(i).keySet()) {
 				tfidf.get(i).put(term, tfidf.get(i).get(term) * idfs.get(term));
-//				Line for debugging
-//				System.out.println(term + " " + tfidf.get(i).get(term));
+				norm += Math.pow(tfidf.get(i).get(term), 2);
 			}
+			normds.put(i, Math.sqrt(norm));
 		}
-		
 		/***********************************************/
 	}
 	
 	public double tf(List<String> d, String t) {
-		
-		int f = 0;
+		int f = 1;
 		for(String s: d)
 			if(t.equals(s)) f++;
 		if(f == 0)	return 0;
 		else		return 1 + Math.log10((double) f);
 	}
 	
-	public double cosine(Map<String, Double> q, Map<String, Double> d) {
+	public double cosine(Map<String, Double> query, int docId) {
 		
-		double dot = 0, normq = 0, normd = 0;
+		double dot = 0, normq = 0, normd;
+		HashSet<String> intersection = new HashSet<>(query.keySet());
+//		Find norm of the query vector
+		for(String term: query.keySet()) {
+			normq += Math.pow(query.get(term), 2);
+		}
+		normq = Math.sqrt(normq);
 		
-		for(String t: dfs.keySet()) {
-//			if(q.get(t) != null && d.get(t) != null) {
-				dot += q.get(t) * d.get(t);
-				normq += Math.pow(q.get(t), 2);
-				normd += Math.pow(d.get(t), 2);
-//			}
+//		Get norm d
+		normd = normds.get(docId);
+		
+//		Find dot product
+		intersection.retainAll(tfidf.get(docId).keySet());
+		for(String term: intersection) {
+			dot += query.get(term) * tfidf.get(docId).get(term);
 		}
 		
-//		System.out.println(sumDot + " " + sumQ + " " + sumQ);
-//		System.out.println(dot/(Math.sqrt(normq) * Math.sqrt(normd)));
-		return dot/(Math.sqrt(normq) * Math.sqrt(normd));
+//		System.out.println(dot + " " + normq + " " + normd);
+		return dot/(normq*normd);
 	}
+	
 	
 	@Override
 	public List<SearchResult> search(String queryString, int k) {
@@ -99,12 +104,14 @@ public class TFIDFSearcher extends Searcher
 //		Create the vector of the query
 		for(String term: qTerm) {
 			qVector.put(term, tf(tokenize(queryString), term) * idfs.get(term));
-//			System.out.println(term + " " + tf(tokenize(queryString), term));
 		}
 		
+//		Calculate cosine similarity
 		for(Document d: this.documents) {
-			cosineScore.add(new SearchResult(d, cosine(qVector, tfidf.get(d.getId()))));
+			cosineScore.add(new SearchResult(d, cosine(qVector, d.getId())));
 		}
+		
+		Collections.sort(cosineScore);
 		
 		for(int i = 0; i < k; i++) {
 			results.add(cosineScore.get(i));
