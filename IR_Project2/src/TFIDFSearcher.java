@@ -31,11 +31,8 @@ public class TFIDFSearcher extends Searcher
 //				Count document frequency
 //				If the term already exist then increment
 //				Add the the term to the map otherwise
-				if (dfs.get(term) != null) {
-					dfs.put(term, dfs.get(term) + 1);
-				}else {
-					dfs.put(term, 1);
-				}
+				if (dfs.get(term) != null)	dfs.put(term, dfs.get(term) + 1);
+				else						dfs.put(term, 1);
 				
 				tfs.put(term, tf(d.getTokens(), term));
 			}
@@ -44,13 +41,14 @@ public class TFIDFSearcher extends Searcher
 		
 //		Loop to calculate inverted document frequency
 		for(String term: dfs.keySet()) {
-			idfs.put(term, Math.log10(1 + (dfs.size() / (double) dfs.get(term))));
+			idfs.put(term, Math.log10(1 + ((double) this.documents.size() / dfs.get(term))));
 		}
 		
 //		Loop to calculate td-idf weight
 		for(Integer i: tfidf.keySet()) {
 			norm = 0;
 			for(String term: tfidf.get(i).keySet()) {
+//				System.out.println(i + ": " + term + ", " + tfidf.get(i).get(term) + ", " + idfs.get(term) + ", " + tfidf.get(i).get(term) * idfs.get(term));
 				tfidf.get(i).put(term, tfidf.get(i).get(term) * idfs.get(term));
 				norm += Math.pow(tfidf.get(i).get(term), 2);
 			}
@@ -59,12 +57,13 @@ public class TFIDFSearcher extends Searcher
 		/***********************************************/
 	}
 	
+	
 	public double tf(List<String> d, String t) {
-		int f = 1;
+		int f = 0;
 		for(String s: d)
 			if(t.equals(s)) f++;
 		if(f == 0)	return 0;
-		else		return 1 + Math.log10((double) f);
+		else		return 1 + Math.log10(f);
 	}
 	
 	public double cosine(Map<String, Double> query, int docId) {
@@ -77,7 +76,7 @@ public class TFIDFSearcher extends Searcher
 		}
 		normq = Math.sqrt(normq);
 		
-//		Get norm d
+//		Get norm of document with document id
 		normd = normds.get(docId);
 		
 //		Find dot product
