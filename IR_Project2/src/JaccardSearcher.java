@@ -1,6 +1,6 @@
-//Name: 
-//Section: 
-//ID: 
+//Name:		Thanakorn Pasangthein, Nontapat Pintira, Tanaporn Rojanaridpiched
+//Section: 	6088109, 6088118, 6088146
+//ID: 		1, 1, 3
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,10 +12,9 @@ public class JaccardSearcher extends Searcher{
 
 	public JaccardSearcher(String docFilename) {
 		super(docFilename);
-		/************* YOUR CODE HERE ******************/
-		//Why do I need a code here//
+		/************* YOUR CODE HERE ******************/								
 		/***********************************************/
-	}
+	} 
 
 	@Override
 	public List<SearchResult> search(String queryString, int k) {

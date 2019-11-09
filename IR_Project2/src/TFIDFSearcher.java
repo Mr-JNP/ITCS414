@@ -1,6 +1,6 @@
-//Name: 
-//Section: 
-//ID: 
+//Name:		Thanakorn Pasangthein, Nontapat Pintira, Tanaporn Rojanaridpiched
+//Section: 	6088109, 6088118, 6088146
+//ID: 		1, 1, 3
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -127,6 +127,7 @@ public class TFIDFSearcher extends Searcher
 		Set<String> qTerm = new HashSet<>(tokenize(queryString));
 		
 		for(String term: qTerm) {
+			if (idfs.containsKey(term))
 			qVector.put(term, tf(tokenize(queryString), term) * idfs.get(term));
 		}
 		
